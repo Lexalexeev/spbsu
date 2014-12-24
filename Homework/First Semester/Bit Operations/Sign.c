@@ -7,8 +7,7 @@
 #include <stdio.h>
 
 int sign(int n) {
-   int const dimension = 31;
-   return (n >> dimension | (!!n));
+   return (n >> 31 | (!!n));
 }
 
 int main(void)
