@@ -1,6 +1,8 @@
 ﻿// Homework 8
 // Alekseev Aleksei, group 171.
 
+module Tests
+
 open System
 open System.Windows.Forms
 open System.Drawing
