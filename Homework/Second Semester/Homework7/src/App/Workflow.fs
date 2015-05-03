@@ -9,3 +9,7 @@ type RingBuilder(n : int) =
   member this.Return x =
     if (x % n < 0) then (x % n + n) else (x % n)
 let ring n = RingBuilder n
+
+[<EntryPoint>]
+let main argv =
+  0
