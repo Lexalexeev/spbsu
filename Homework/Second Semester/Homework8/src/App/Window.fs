@@ -8,14 +8,25 @@ open System.Windows.Forms
 open System.Drawing
 open Calc
 
+exception IncorrectString
+exception IncorrectOperator
+
 let input =
-  let txtbox = new TextBox()
-  txtbox.AppendText("0")
-  txtbox.Size <- new Size(460,0)
+  let txtbox = new Label()
+  txtbox.Text <- "0"
+  txtbox.Size <- new Size(460,40)
   txtbox.Location <- new Point(40,20)
-  txtbox.TextAlign <- HorizontalAlignment.Right
+  txtbox.TextAlign <- ContentAlignment.MiddleRight
   txtbox.Font <- new Font("Arial", 12.0f)
   txtbox
+
+let error =
+  let errlab = new Label()
+  errlab.Size <- new Size(460,40)
+  errlab.Location <- new Point(40,0)
+  errlab.TextAlign <- ContentAlignment.MiddleLeft
+  errlab.Font <- new Font("Arial", 12.0f)
+  errlab
 
 let exitButton =
   let btn = new Button()
@@ -56,7 +67,7 @@ let operButton op =
   | '*' -> btn.Location <- new Point(280,140)
   | '-' -> btn.Location <- new Point(280,210)
   | '+' -> btn.Location <- new Point(280,280)
-  | _ -> failwith ""
+  | _ -> raise IncorrectOperator
   btn.Click.Add(fun _ -> 
     let mutable str = input.Text 
     let s = str.[str.Length - 1]
@@ -66,7 +77,7 @@ let operButton op =
     then input.Text <- input.Text + string op
     else if s = ' ' then
       str <- ""
-      for i = 0 to input.TextLength - 3 do
+      for i = 0 to input.Text.Length - 3 do
         str <- str + string input.Text.[i]
       str <- str + string op + " "
       input.Text <- str)
@@ -78,16 +89,31 @@ let equalButton =
   btn.Text <- "="
   btn.Location <- new Point(200,280)
   btn.BackColor <- Color.LightBlue
-  btn.Click.Add(fun _ -> input.Text <- string (Calculate(GetExpression(input.Text))))
+  btn.Click.Add(fun _ -> 
+    let s = input.Text
+    let mutable lbkt = 0
+    let mutable rbkt = 0
+    for i = 0 to s.Length - 1 do
+      if s.[i] = ',' then input.Text <- "0"
+      if s.[i] = '(' then lbkt <- lbkt + 1
+      if s.[i] = ')' then rbkt <- rbkt + 1
+    if lbkt <> rbkt then 
+      raise IncorrectString
+    match s.[s.Length-2] with
+    | '+' | '-' | '*' | '/' | '(' ->  raise IncorrectString
+    | _ ->
+    input.Text <- string (Calculate(GetExpression(input.Text))))
   btn
 
-let dotButton =
+let zeroButton =
   let btn = new Button()
   btn.Size <- new Size(60,50)
-  btn.Text <- "."
-  btn.Enabled <- false
+  btn.Text <- "000"
   btn.Location <- new Point(120,280)
   btn.BackColor <- Color.LightGray
+  btn.Click.Add(fun _ -> 
+    if System.Char.IsDigit(input.Text.[input.Text.Length - 1]) && input.Text <> "0"
+    then input.Text <- input.Text + "000")
   btn
 
 let lbktButton =
@@ -99,7 +125,7 @@ let lbktButton =
   btn.Click.Add(fun _ -> 
     let str = input.Text 
     let s = str.[str.Length - 1]
-    if (s = '0') then input.Text <- "(" else 
+    if (s = '0') && (str.Length = 1) then input.Text <- "(" else 
     if (not(System.Char.IsDigit(s)) && s <> ')')
     then input.Text <- input.Text + "(")
   btn
@@ -112,36 +138,42 @@ let rbktButton =
   btn.BackColor <- Color.LightGray
   btn.Click.Add(fun _ -> 
     let str = input.Text 
-    let s = str.[str.Length - 1]
-    if System.Char.IsDigit(s) || s = ')'
-    then input.Text <- input.Text + ")")
+    let mutable lbkt = 0
+    let mutable rbkt = 0
+    for i = 0 to str.Length - 1 do
+      if str.[i] = '(' then lbkt <- lbkt + 1
+      if str.[i] = ')' then rbkt <- rbkt + 1
+    if lbkt > rbkt then 
+      let s = str.[str.Length - 1]
+      if System.Char.IsDigit(s) || s = ')'
+      then input.Text <- input.Text + ")")
   btn
 
 let sqrtButton =
   let btn = new Button()
   btn.Size <- new Size(60,50)
   btn.Text <- "sqrt"
-  btn.Enabled <- false
   btn.Location <- new Point(360,280)
   btn.BackColor <- Color.LightGray
+  btn.Click.Add(fun _ -> input.Text <- System.Math.Sqrt(Double.Parse(input.Text)).ToString())
   btn
 
 let sinButton =
   let btn = new Button()
   btn.Size <- new Size(60,50)
   btn.Text <- "sin"
-  btn.Enabled <- false
   btn.Location <- new Point(360,210)
   btn.BackColor <- Color.LightGray
+  btn.Click.Add(fun _ -> input.Text <- System.Math.Sin(Double.Parse(input.Text)).ToString())
   btn
 
 let cosButton =
   let btn = new Button()
   btn.Size <- new Size(60,50)
   btn.Text <- "cos"
-  btn.Enabled <- false
   btn.Location <- new Point(440,210)
   btn.BackColor <- Color.LightGray
+  btn.Click.Add(fun _ -> input.Text <- System.Math.Cos(Double.Parse(input.Text)).ToString())
   btn
 
 let clearButton =
@@ -163,7 +195,7 @@ let backspaceButton =
     if input.Text <> "0" then
       let mutable str = ""
       let mutable space = input.Text.Length - 2
-      if space > 0 || space = 0 then
+      if space > 0 || space = 0 then     
         if input.Text.[space] = ' ' then space <- space - 1
       for i = 0 to space do
         str <- str + string input.Text.[i]
@@ -179,9 +211,10 @@ let mainForm =
   form.BackColor <- Color.Silver
   form.FormBorderStyle <- FormBorderStyle.FixedDialog
   form.Controls.Add(input)
+  form.Controls.Add(error)
   for i = 0 to 9 do form.Controls.Add(digitButton i)
   for c in [|'/';'*';'-';'+'|] do form.Controls.Add(operButton c)
-  form.Controls.Add(dotButton)
+  form.Controls.Add(zeroButton)
   form.Controls.Add(equalButton)
   form.Controls.Add(backspaceButton)
   form.Controls.Add(clearButton)

@@ -60,7 +60,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\App\App.fsproj">
+    <ProjectReference Include="..\app\app.fsproj">
       <Name>App</Name>
       <Project>{16fc65d5-f74d-47d4-8b6b-1b83d21303c4}</Project>
       <Private>True</Private>
