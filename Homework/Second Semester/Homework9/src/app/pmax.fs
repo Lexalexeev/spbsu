@@ -7,7 +7,7 @@ open System.Threading
 
 // Task 46 
 let maxInRange (arr : int []) l r : int =
-  let mutable res = 0
+  let mutable res = arr.[0]
   for i in l .. r do
     if arr.[i] > res then
       res <- arr.[i]
@@ -15,18 +15,17 @@ let maxInRange (arr : int []) l r : int =
 
 let max (arr : int []) (threadNum : int) =
   let arraySize = arr.Length
+  let threadNum = min arraySize threadNum
   let res = ref 0
   let step = arraySize / threadNum   
   let threadArray = Array.init threadNum (fun i ->
     new Thread(ThreadStart(fun _ ->
         let threadRes = maxInRange arr (i * step) ((i + 1) * step - 1)
-        Monitor.Enter(res)
-        try
-          if threadRes > res.Value then res := threadRes
-        finally
-          Monitor.Exit(res)
+        lock res (fun _ -> res := max res.Value threadRes)
         ))
     )
+  let threadRes = maxInRange arr ((threadNum - 1) * step) (arr.Length - 1)
+  res := max res.Value threadRes
   for t in threadArray do
     t.Start()
   for t in threadArray do
@@ -47,9 +46,7 @@ let defIntegral (threadNumber : int) f l r e : float =
       new Thread(ThreadStart(fun _ ->
           let threadRes =
             integralInRange f (l + step * (float i)) (l + step * (float (i + 1))) e
-          Monitor.Enter(res)
-          res := res.Value + threadRes
-          Monitor.Exit(res)
+          lock res (fun _ -> res := res.Value + threadRes)
         ))
     )
   for t in threadArray do
@@ -57,6 +54,13 @@ let defIntegral (threadNumber : int) f l r e : float =
   for t in threadArray do
     t.Join()
   res.Value
+
+let duration s f = 
+  let timer = new System.Diagnostics.Stopwatch()
+  timer.Start()
+  let returnValue = f()
+  printfn "Task: %s\t\t\tElapsed Time: %i" s timer.ElapsedMilliseconds
+  returnValue
 
 [<EntryPoint>]
 let main argv =

@@ -39,3 +39,43 @@ let ``TestMax`` (arr : int []) (t : int) =
 [<TestCase(2, -6.0, 0.0, 1, Result = -6.0)>]
 let ``TestIntegral`` (threadNumber : int) l r e : float  =
   defIntegral threadNumber (fun x -> x + 2.0) l r e 
+
+
+(*
+---Max 10^6---
+treadNumber: 1         Elapsed Time: 9
+treadNumber: 2         Elapsed Time: 3
+treadNumber: 3         Elapsed Time: 2
+treadNumber: 4         Elapsed Time: 2
+
+---Max 10^7---
+treadNumber: 1         Elapsed Time: 29
+treadNumber: 2         Elapsed Time: 18
+treadNumber: 3         Elapsed Time: 16
+treadNumber: 4         Elapsed Time: 15
+
+---Max 10^8---
+treadNumber: 1         Elapsed Time: 300
+treadNumber: 2         Elapsed Time: 187
+treadNumber: 3         Elapsed Time: 158
+treadNumber: 4         Elapsed Time: 163
+
+
+---Integral 10^6---
+treadNumber: 1         Elapsed Time: 51
+treadNumber: 2         Elapsed Time: 28
+treadNumber: 3         Elapsed Time: 22
+treadNumber: 4         Elapsed Time: 22
+
+---Integral 10^7---
+treadNumber: 1         Elapsed Time: 384
+treadNumber: 2         Elapsed Time: 249
+treadNumber: 3         Elapsed Time: 214
+treadNumber: 4         Elapsed Time: 233
+
+---Integral 10^8---
+treadNumber: 1         Elapsed Time: 3994
+treadNumber: 2         Elapsed Time: 2775
+treadNumber: 3         Elapsed Time: 2439
+treadNumber: 4         Elapsed Time: 2560
+*)
