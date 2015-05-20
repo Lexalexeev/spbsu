@@ -1,38 +1,52 @@
 ﻿// Homework 10
 // Alekseev Aleksei, group 171.
 
-module matrix
+module mergesort
 
 open System.Threading
 
-let calcInRange (A : int[,]) (B : int[,]) (res : int[,]) (columnB : int) (columnA : int) (l : int) (r : int) =
-  let mutable temp = 0
-  for k = l to r do
-    for i = 0 to columnB - 1 do
-      temp <- 0
-      for j = 0 to columnA - 1 do
-        temp <- temp + (A.[k,j] * B.[j,i])
-      res.[k,i] <- temp
+let split (arr : int []) =
+  let n = arr.Length
+  arr.[0..(n / 2) - 1], arr.[(n / 2)..(n - 1)]
 
-let calc (A : int[,]) (B : int[,]) (threadNum : int) =
-  let lineA = A.GetLength 0
-  let columnA = A.GetLength 1
-  let lineB = B.GetLength 0
-  let columnB = B.GetLength 1
-  let res = Array2D.zeroCreate lineA columnB
-  let step = lineA / threadNum   
-  let threadArray = Array.init threadNum (fun i ->
-    new Thread(ThreadStart(fun _ ->
-        calcInRange A B res columnB columnA (i * step) ((i + 1) * step - 1)
+let rec mergeInRange (l : int []) (r : int []) (res : int [] ref) =
+  let n = l.Length + r.Length
+  let mutable i = 0
+  let mutable j = 0
+  for k = 0 to n - 1 do
+    if i >= l.Length   then 
+      res.Value.[k] <- r.[j]
+      j <- j + 1
+    elif j >= r.Length then 
+      res.Value.[k] <- l.[i]
+      i <- i + 1
+    elif l.[i] < r.[j] then 
+      res.Value.[k] <- l.[i]
+      i <- i + 1
+    else 
+      res.Value.[k] <- r.[j]
+      j <- j + 1
+  res.Value
+ 
+let rec mergeSort (arr : int []) (threadNum : int) =
+  match arr with
+  | [||] -> [||]
+  | [|a|] -> [|a|]
+  | arr ->   
+    let res = ref (Array.zeroCreate(arr.Length))
+    let (x, y) = split arr
+    if threadNum > 1 then
+      let l = ref [||]
+      let r = ref [||]
+      let rThread = new Thread(ThreadStart(fun _ ->
+        l := mergeSort x (threadNum / 2)
         ))
-    )
-  for t in threadArray do
-    t.Start()
-  for t in threadArray do
-    t.Join()
-  if (step * threadNum) < lineA then
-    calcInRange A B res columnB columnA (threadNum * step) (lineA - 1)
-  res
+      rThread.Start()
+      r := mergeSort y (threadNum / 2)
+      rThread.Join()
+      lock res (fun _ -> mergeInRange l.Value r.Value res)
+    else 
+      mergeInRange (mergeSort x 0) (mergeSort y 0) res
 
 let duration s f = 
   let timer = new System.Diagnostics.Stopwatch()
@@ -42,5 +56,5 @@ let duration s f =
   returnValue
 
 [<EntryPoint>]
-let main argv =
+let main argv = 
   0
