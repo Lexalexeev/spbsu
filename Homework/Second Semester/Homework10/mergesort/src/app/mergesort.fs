@@ -5,10 +5,6 @@ module mergesort
 
 open System.Threading
 
-let split (arr : int []) =
-  let n = arr.Length
-  arr.[0..(n / 2) - 1], arr.[(n / 2)..(n - 1)]
-
 let rec mergeInRange (l : int []) (r : int []) (res : int [] ref) =
   let n = l.Length + r.Length
   let mutable i = 0
@@ -34,19 +30,19 @@ let rec mergeSort (arr : int []) (threadNum : int) =
   | [|a|] -> [|a|]
   | arr ->   
     let res = ref (Array.zeroCreate(arr.Length))
-    let (x, y) = split arr
+    let n = arr.Length
     if threadNum > 1 then
       let l = ref [||]
       let r = ref [||]
       let rThread = new Thread(ThreadStart(fun _ ->
-        l := mergeSort x (threadNum / 2)
+        l := mergeSort arr.[0..(n / 2) - 1] (threadNum / 2)
         ))
       rThread.Start()
-      r := mergeSort y (threadNum / 2)
+      r := mergeSort arr.[(n / 2)..(n - 1)] (threadNum / 2)
       rThread.Join()
       lock res (fun _ -> mergeInRange l.Value r.Value res)
     else 
-      mergeInRange (mergeSort x 0) (mergeSort y 0) res
+      mergeInRange (mergeSort arr.[0..(n / 2) - 1] 0) (mergeSort arr.[(n / 2)..(n - 1)] 0) res
 
 let duration s f = 
   let timer = new System.Diagnostics.Stopwatch()
