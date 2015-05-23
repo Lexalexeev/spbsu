@@ -24,7 +24,7 @@ let rec mergeInRange (l : int []) (r : int []) (res : int [] ref) =
       j <- j + 1
   res.Value
  
-let rec mergeSort (arr : int []) (threadNum : int) =
+let rec sort (arr : int []) (threadNum : int) (res : int [] ref) =
   match arr with
   | [||] -> [||]
   | [|a|] -> [|a|]
@@ -35,21 +35,18 @@ let rec mergeSort (arr : int []) (threadNum : int) =
       let l = ref [||]
       let r = ref [||]
       let rThread = new Thread(ThreadStart(fun _ ->
-        l := mergeSort arr.[0..(n / 2) - 1] (threadNum / 2)
+        l := sort arr.[0..(n / 2) - 1] (threadNum / 2) res
         ))
       rThread.Start()
-      r := mergeSort arr.[(n / 2)..(n - 1)] (threadNum / 2)
+      r := sort arr.[(n / 2)..(n - 1)] (threadNum / 2) res
       rThread.Join()
       lock res (fun _ -> mergeInRange l.Value r.Value res)
     else 
-      mergeInRange (mergeSort arr.[0..(n / 2) - 1] 0) (mergeSort arr.[(n / 2)..(n - 1)] 0) res
+      mergeInRange (sort arr.[0..(n / 2) - 1] 0 res) (sort arr.[(n / 2)..(n - 1)] 0 res) res
 
-let duration s f = 
-  let timer = new System.Diagnostics.Stopwatch()
-  timer.Start()
-  let returnValue = f()
-  printfn "Task: %s\t\t\tElapsed Time: %i" s timer.ElapsedMilliseconds
-  returnValue
+let mergeSort (arr : int []) (threadNum : int) =
+  let res = ref(Array.zeroCreate(arr.Length))
+  sort arr threadNum res
 
 [<EntryPoint>]
 let main argv = 
